@@ -1,0 +1,532 @@
+{
+	"info": {
+		"_postman_id": "bkash-tokenized-api-collection",
+		"name": "bKash Tokenized Checkout API",
+		"description": "bKash Tokenized Checkout API Collection for Sandbox Testing",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "https://tokenized.sandbox.bka.sh/v1.2.0-beta/tokenized/checkout"
+		},
+		{
+			"key": "app_key",
+			"value": "4f6o0cjiki2rfm34kfdadl1eqq"
+		},
+		{
+			"key": "app_secret",
+			"value": "2is7hdktrekvrbljjh44ll3d9l1dtjo4pasmjvs5vl5qr3fug4b"
+		},
+		{
+			"key": "username",
+			"value": "sandboxTokenizedUser02"
+		},
+		{
+			"key": "password",
+			"value": "sandboxTokenizedUser02@12345"
+		},
+		{
+			"key": "id_token",
+			"value": ""
+		},
+		{
+			"key": "payment_id",
+			"value": ""
+		}
+	],
+	"item": [
+		{
+			"name": "1. Grant Token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Parse response",
+							"var jsonData = pm.response.json();",
+							"",
+							"// Test for successful response",
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Token grant successful\", function () {",
+							"    pm.expect(jsonData.statusCode).to.eql(\"0000\");",
+							"    pm.expect(jsonData.statusMessage).to.eql(\"Successful\");",
+							"});",
+							"",
+							"pm.test(\"id_token exists\", function () {",
+							"    pm.expect(jsonData.id_token).to.exist;",
+							"});",
+							"",
+							"// Save token to collection variable for next requests",
+							"if (jsonData.id_token) {",
+							"    pm.collectionVariables.set(\"id_token\", jsonData.id_token);",
+							"    console.log(\"Token saved successfully!\");",
+							"}",
+							"",
+							"// Save refresh token",
+							"if (jsonData.refresh_token) {",
+							"    pm.collectionVariables.set(\"refresh_token\", jsonData.refresh_token);",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "username",
+						"value": "{{username}}"
+					},
+					{
+						"key": "password",
+						"value": "{{password}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"app_key\": \"{{app_key}}\",\n    \"app_secret\": \"{{app_secret}}\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/token/grant",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"token",
+						"grant"
+					]
+				},
+				"description": "Get authentication token from bKash API"
+			},
+			"response": []
+		},
+		{
+			"name": "2. Create Payment",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"",
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Payment created successfully\", function () {",
+							"    pm.expect(jsonData.statusCode).to.eql(\"0000\");",
+							"    pm.expect(jsonData.statusMessage).to.eql(\"Successful\");",
+							"});",
+							"",
+							"pm.test(\"Payment ID exists\", function () {",
+							"    pm.expect(jsonData.paymentID).to.exist;",
+							"});",
+							"",
+							"pm.test(\"bKash URL exists\", function () {",
+							"    pm.expect(jsonData.bkashURL).to.exist;",
+							"});",
+							"",
+							"pm.test(\"Transaction status is Initiated\", function () {",
+							"    pm.expect(jsonData.transactionStatus).to.eql(\"Initiated\");",
+							"});",
+							"",
+							"// Save payment ID for next requests",
+							"if (jsonData.paymentID) {",
+							"    pm.collectionVariables.set(\"payment_id\", jsonData.paymentID);",
+							"    console.log(\"Payment ID saved: \" + jsonData.paymentID);",
+							"}",
+							"",
+							"// Log bKash URL for manual testing",
+							"if (jsonData.bkashURL) {",
+							"    console.log(\"bKash Payment URL: \" + jsonData.bkashURL);",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"// Generate unique invoice number",
+							"var invoiceNumber = \"INV-\" + Date.now();",
+							"pm.collectionVariables.set(\"invoice_number\", invoiceNumber);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "{{id_token}}"
+					},
+					{
+						"key": "X-APP-Key",
+						"value": "{{app_key}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"mode\": \"0011\",\n    \"payerReference\": \"01770618575\",\n    \"callbackURL\": \"https://example.com/callback\",\n    \"amount\": \"10\",\n    \"currency\": \"BDT\",\n    \"intent\": \"sale\",\n    \"merchantInvoiceNumber\": \"{{invoice_number}}\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/create",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"create"
+					]
+				},
+				"description": "Create a new payment request"
+			},
+			"response": []
+		},
+		{
+			"name": "3. Execute Payment",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"",
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"// Note: Execute will fail in sandbox without user completing payment on bkashURL",
+							"if (jsonData.statusCode === \"0000\") {",
+							"    pm.test(\"Payment executed successfully\", function () {",
+							"        pm.expect(jsonData.statusCode).to.eql(\"0000\");",
+							"    });",
+							"    ",
+							"    pm.test(\"Transaction ID exists\", function () {",
+							"        pm.expect(jsonData.trxID).to.exist;",
+							"    });",
+							"} else {",
+							"    console.log(\"Execute Response: \" + JSON.stringify(jsonData));",
+							"    console.log(\"Note: User must complete payment on bkashURL before executing\");",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "{{id_token}}"
+					},
+					{
+						"key": "X-APP-Key",
+						"value": "{{app_key}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"paymentID\": \"{{payment_id}}\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/execute",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"execute"
+					]
+				},
+				"description": "Execute the payment after user completes on bKash app/web"
+			},
+			"response": []
+		},
+		{
+			"name": "4. Query Payment Status",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"",
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Query successful\", function () {",
+							"    pm.expect(jsonData.statusCode).to.eql(\"0000\");",
+							"});",
+							"",
+							"pm.test(\"Payment ID matches\", function () {",
+							"    pm.expect(jsonData.paymentID).to.eql(pm.collectionVariables.get(\"payment_id\"));",
+							"});",
+							"",
+							"console.log(\"Payment Status: \" + jsonData.transactionStatus);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "{{id_token}}"
+					},
+					{
+						"key": "X-APP-Key",
+						"value": "{{app_key}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"paymentID\": \"{{payment_id}}\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/payment/status",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"payment",
+						"status"
+					]
+				},
+				"description": "Check the status of a payment"
+			},
+			"response": []
+		},
+		{
+			"name": "5. Search Transaction",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"",
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"console.log(\"Search Result: \" + JSON.stringify(jsonData));"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "{{id_token}}"
+					},
+					{
+						"key": "X-APP-Key",
+						"value": "{{app_key}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"trxID\": \"YOUR_TRX_ID_HERE\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/general/searchTransaction",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"general",
+						"searchTransaction"
+					]
+				},
+				"description": "Search for a transaction by trxID"
+			},
+			"response": []
+		},
+		{
+			"name": "6. Refund Transaction",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"",
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"if (jsonData.statusCode === \"0000\") {",
+							"    pm.test(\"Refund successful\", function () {",
+							"        pm.expect(jsonData.statusCode).to.eql(\"0000\");",
+							"    });",
+							"}",
+							"",
+							"console.log(\"Refund Result: \" + JSON.stringify(jsonData));"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "{{id_token}}"
+					},
+					{
+						"key": "X-APP-Key",
+						"value": "{{app_key}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"paymentID\": \"{{payment_id}}\",\n    \"amount\": \"5\",\n    \"trxID\": \"YOUR_TRX_ID_HERE\",\n    \"sku\": \"refund\",\n    \"reason\": \"Test refund\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/payment/refund",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"payment",
+						"refund"
+					]
+				},
+				"description": "Refund a completed transaction"
+			},
+			"response": []
+		},
+		{
+			"name": "7. Refresh Token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"",
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Token refresh successful\", function () {",
+							"    pm.expect(jsonData.statusCode).to.eql(\"0000\");",
+							"});",
+							"",
+							"// Save new token",
+							"if (jsonData.id_token) {",
+							"    pm.collectionVariables.set(\"id_token\", jsonData.id_token);",
+							"    console.log(\"New token saved!\");",
+							"}",
+							"",
+							"if (jsonData.refresh_token) {",
+							"    pm.collectionVariables.set(\"refresh_token\", jsonData.refresh_token);",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "username",
+						"value": "{{username}}"
+					},
+					{
+						"key": "password",
+						"value": "{{password}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"app_key\": \"{{app_key}}\",\n    \"app_secret\": \"{{app_secret}}\",\n    \"refresh_token\": \"{{refresh_token}}\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/token/refresh",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"token",
+						"refresh"
+					]
+				},
+				"description": "Refresh the authentication token"
+			},
+			"response": []
+		}
+	]
+}

@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E-Commerce ERD — Visual Diagram</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Outfit:wght@300;400;600;700;800&display=swap');
+
+:root {
+  --bg: #050810;
+  --panel: #0b0f1a;
+  --card: #0f1525;
+  --border: #1a2540;
+  --text: #dde4f0;
+  --muted: #3d5275;
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'Outfit', sans-serif;
+
+  --c1:  #38bdf8;
+  --c2:  #a78bfa;
+  --c3:  #34d399;
+  --c4:  #fb923c;
+  --c5:  #f472b6;
+  --c6:  #facc15;
+  --c7:  #f87171;
+  --c8:  #2dd4bf;
+  --c9:  #c084fc;
+  --c10: #94a3b8;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* noise overlay */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0; opacity: 0.6;
+}
+
+/* ── HEADER ── */
+.header {
+  position: relative; z-index: 10;
+  padding: 2.5rem 2rem 2rem;
+  display: flex; align-items: center; gap: 2rem; flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(56,189,248,0.04) 0%, transparent 100%);
+}
+
+.header-left h1 {
+  font-size: clamp(1.4rem, 3vw, 2.2rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  background: linear-gradient(135deg, #e0f2fe 0%, #38bdf8 40%, #a78bfa 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.header-left p {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--muted);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-top: 0.3rem;
+}
+
+.stats-bar {
+  display: flex; gap: 1rem; flex-wrap: wrap; margin-left: auto;
+}
+.stat-chip {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  padding: 0.4rem 0.9rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  color: var(--muted);
+}
+.stat-chip strong { color: var(--text); }
+
+/* ── LEGEND BAR ── */
+.legend-bar {
+  position: relative; z-index: 10;
+  display: flex; flex-wrap: wrap; gap: 0.5rem;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+}
+
+.leg {
+  display: flex; align-items: center; gap: 0.45rem;
+  font-size: 0.72rem; font-weight: 600;
+  padding: 0.3rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.leg:hover { transform: translateY(-2px); }
+.leg-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+.leg.l1  { color: var(--c1);  border-color: rgba(56,189,248,0.25);  background: rgba(56,189,248,0.07);  }
+.leg.l2  { color: var(--c2);  border-color: rgba(167,139,250,0.25); background: rgba(167,139,250,0.07); }
+.leg.l3  { color: var(--c3);  border-color: rgba(52,211,153,0.25);  background: rgba(52,211,153,0.07);  }
+.leg.l4  { color: var(--c4);  border-color: rgba(251,146,60,0.25);  background: rgba(251,146,60,0.07);  }
+.leg.l5  { color: var(--c5);  border-color: rgba(244,114,182,0.25); background: rgba(244,114,182,0.07); }
+.leg.l6  { color: var(--c6);  border-color: rgba(250,204,21,0.25);  background: rgba(250,204,21,0.07);  }
+.leg.l7  { color: var(--c7);  border-color: rgba(248,113,113,0.25); background: rgba(248,113,113,0.07); }
+.leg.l8  { color: var(--c8);  border-color: rgba(45,212,191,0.25);  background: rgba(45,212,191,0.07);  }
+.leg.l9  { color: var(--c9);  border-color: rgba(192,132,252,0.25); background: rgba(192,132,252,0.07); }
+.leg.l10 { color: var(--c10); border-color: rgba(148,163,184,0.25); background: rgba(148,163,184,0.07); }
+
+/* ── CANVAS AREA ── */
+.canvas-wrap {
+  position: relative; z-index: 5;
+  width: 100%; overflow: auto;
+  cursor: grab;
+  user-select: none;
+}
+.canvas-wrap:active { cursor: grabbing; }
+
+.canvas {
+  position: relative;
+  width: 3200px;
+  height: 2400px;
+}
+
+svg.connections {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+}
+
+/* ── ENTITY CARDS ── */
+.entity {
+  position: absolute;
+  background: var(--card);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  min-width: 180px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  transition: box-shadow 0.2s, transform 0.2s;
+  cursor: pointer;
+}
+.entity:hover {
+  transform: translateY(-3px);
+  z-index: 100;
+}
+
+.entity-head {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+}
+.entity-head .dot { width: 7px; height: 7px; border-radius: 50%; }
+.entity-icon { font-size: 0.9rem; }
+
+.entity-fields {
+  padding: 0.4rem 0.75rem 0.5rem;
+  display: flex; flex-direction: column; gap: 0.18rem;
+}
+
+.field {
+  display: flex; align-items: center; gap: 0.4rem;
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  line-height: 1.4;
+  color: #6b84a4;
+}
+.field.pk { color: #fbbf24; }
+.field.fk { color: #818cf8; }
+.field.uk { color: #34d399; }
+
+.field-badge {
+  font-size: 0.48rem;
+  padding: 0.05rem 0.3rem;
+  border-radius: 3px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  flex-shrink: 0;
+}
+.badge-pk { background: rgba(251,191,36,0.2); color: #fbbf24; }
+.badge-fk { background: rgba(129,140,248,0.2); color: #818cf8; }
+.badge-uk { background: rgba(52,211,153,0.2); color: #34d399; }
+
+/* Color borders per section */
+.s1  { border-top: 2px solid var(--c1);  } .s1  .entity-head { color: var(--c1);  background: rgba(56,189,248,0.08);  }
+.s2  { border-top: 2px solid var(--c2);  } .s2  .entity-head { color: var(--c2);  background: rgba(167,139,250,0.08); }
+.s3  { border-top: 2px solid var(--c3);  } .s3  .entity-head { color: var(--c3);  background: rgba(52,211,153,0.08);  }
+.s4  { border-top: 2px solid var(--c4);  } .s4  .entity-head { color: var(--c4);  background: rgba(251,146,60,0.08);  }
+.s5  { border-top: 2px solid var(--c5);  } .s5  .entity-head { color: var(--c5);  background: rgba(244,114,182,0.08); }
+.s6  { border-top: 2px solid var(--c6);  } .s6  .entity-head { color: var(--c6);  background: rgba(250,204,21,0.08);  }
+.s7  { border-top: 2px solid var(--c7);  } .s7  .entity-head { color: var(--c7);  background: rgba(248,113,113,0.08); }
+.s8  { border-top: 2px solid var(--c8);  } .s8  .entity-head { color: var(--c8);  background: rgba(45,212,191,0.08);  }
+.s9  { border-top: 2px solid var(--c9);  } .s9  .entity-head { color: var(--c9);  background: rgba(192,132,252,0.08); }
+.s10 { border-top: 2px solid var(--c10); } .s10 .entity-head { color: var(--c10); background: rgba(148,163,184,0.08); }
+
+/* ── RELATIONSHIP LINES ── */
+.rel-line { stroke-width: 1.5; fill: none; opacity: 0.5; stroke-dasharray: none; }
+.rel-line:hover { opacity: 1; stroke-width: 2.5; }
+
+/* tooltip */
+.tooltip {
+  position: fixed;
+  background: #1e293b;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 0.8rem;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--text);
+  pointer-events: none;
+  z-index: 9999;
+  display: none;
+  white-space: nowrap;
+}
+
+/* controls */
+.controls {
+  position: fixed; bottom: 1.5rem; right: 1.5rem;
+  z-index: 999;
+  display: flex; flex-direction: column; gap: 0.5rem;
+}
+.ctrl-btn {
+  width: 36px; height: 36px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.ctrl-btn:hover { background: var(--border); transform: scale(1.1); }
+
+/* section labels */
+.section-label {
+  position: absolute;
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  opacity: 0.35;
+  pointer-events: none;
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <h1>E-Commerce Platform — Entity Relationship Diagram</h1>
+    <p>MySQL 8.0+ · InnoDB · utf8mb4 · 65 Tables · Complete Schema</p>
+  </div>
+  <div class="stats-bar">
+    <div class="stat-chip"><strong>65</strong> Tables</div>
+    <div class="stat-chip"><strong>10</strong> Sections</div>
+    <div class="stat-chip"><strong>3</strong> Views</div>
+    <div class="stat-chip"><strong>5</strong> Triggers</div>
+    <div class="stat-chip">Drag to Pan · Scroll to Zoom</div>
+  </div>
+</div>
+
+<!-- LEGEND -->
+<div class="legend-bar">
+  <div class="leg l1"><div class="leg-dot" style="background:var(--c1)"></div>🔵 User &amp; Auth</div>
+  <div class="leg l2"><div class="leg-dot" style="background:var(--c2)"></div>🟣 Products &amp; Catalog</div>
+  <div class="leg l3"><div class="leg-dot" style="background:var(--c3)"></div>🟢 Orders &amp; Transactions</div>
+  <div class="leg l4"><div class="leg-dot" style="background:var(--c4)"></div>🟠 Inventory &amp; Stock</div>
+  <div class="leg l5"><div class="leg-dot" style="background:var(--c5)"></div>🩷 Payments &amp; Vendors</div>
+  <div class="leg l6"><div class="leg-dot" style="background:var(--c6)"></div>🟡 Shipping</div>
+  <div class="leg l7"><div class="leg-dot" style="background:var(--c7)"></div>🔴 Reviews</div>
+  <div class="leg l8"><div class="leg-dot" style="background:var(--c8)"></div>🩵 Marketing</div>
+  <div class="leg l9"><div class="leg-dot" style="background:var(--c9)"></div>🟪 Content</div>
+  <div class="leg l10"><div class="leg-dot" style="background:var(--c10)"></div>⬜ System &amp; Logs</div>
+  <div style="margin-left:auto;display:flex;gap:0.75rem;align-items:center;font-size:0.65rem;color:var(--muted);font-family:var(--mono)">
+    <span>🟡 PK &nbsp; 🟣 FK &nbsp; 🟢 UK</span>
+    <span>→ One-to-Many</span>
+    <span>↔ One-to-One</span>
+  </div>
+</div>
+
+<!-- CANVAS -->
+<div class="canvas-wrap" id="canvasWrap">
+  <div class="canvas" id="canvas" style="transform-origin: 0 0;">
+
+    <!-- SVG CONNECTIONS -->
+    <svg class="connections" id="svgConn"></svg>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- SECTION 1: USER & AUTH (Sky Blue) -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="section-label s1" style="left:40px;top:30px;color:var(--c1)">01 · User &amp; Authentication</div>
+
+    <div class="entity s1" id="users" style="left:280px;top:80px;min-width:210px">
+      <div class="entity-head"><div class="dot" style="background:var(--c1)"></div>👤 users</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field uk"><span class="field-badge badge-uk">UK</span> email VARCHAR</div>
+        <div class="field">email_verified_at TIMESTAMP</div>
+        <div class="field">password VARCHAR</div>
+        <div class="field">first_name / last_name</div>
+        <div class="field">phone VARCHAR</div>
+        <div class="field">avatar VARCHAR</div>
+        <div class="field">user_type ENUM</div>
+        <div class="field">status ENUM</div>
+        <div class="field">two_factor_enabled BOOL</div>
+        <div class="field">last_login_at TIMESTAMP</div>
+        <div class="field">preferred_currency</div>
+        <div class="field">timezone VARCHAR</div>
+        <div class="field">created_at / deleted_at</div>
+      </div>
+    </div>
+
+    <div class="entity s1" id="user_roles" style="left:30px;top:80px;min-width:180px">
+      <div class="entity-head"><div class="dot" style="background:var(--c1)"></div>🔑 user_roles</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> user_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> role_id</div>
+        <div class="field">created_at</div>
+      </div>
+    </div>
+
+    <div class="entity s1" id="roles" style="left:30px;top:290px;min-width:180px">
+      <div class="entity-head"><div class="dot" style="background:var(--c1)"></div>🎭 roles</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field uk"><span class="field-badge badge-uk">UK</span> name VARCHAR</div>
+        <div class="field">display_name</div>
+        <div class="field">description TEXT</div>
+      </div>
+    </div>
+
+    <div class="entity s1" id="role_permissions" style="left:30px;top:460px;min-width:180px">
+      <div class="entity-head"><div class="dot" style="background:var(--c1)"></div>🔒 role_permissions</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> role_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> permission_id</div>
+      </div>
+    </div>
+
+    <div class="entity s1" id="permissions" style="left:30px;top:600px;min-width:180px">
+      <div class="entity-head"><div class="dot" style="background:var(--c1)"></div>✅ permissions</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field uk"><span class="field-badge badge-uk">UK</span> name VARCHAR</div>
+        <div class="field">display_name</div>
+        <div class="field">module VARCHAR</div>
+      </div>
+    </div>
+
+    <div class="entity s1" id="user_addresses" style="left:560px;top:80px;min-width:190px">
+      <div class="entity-head"><div class="dot" style="background:var(--c1)"></div>📍 user_addresses</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> user_id</div>
+        <div class="field">address_type ENUM</div>
+        <div class="field">full_name / phone</div>
+        <div class="field">address_line1 / city</div>
+        <div class="field">state / postal_code</div>
+        <div class="field">country / country_code</div>
+        <div class="field">is_default BOOL</div>
+      </div>
+    </div>
+
+    <div class="entity s1" id="user_sessions" style="left:560px;top:310px;min-width:185px">
+      <div class="entity-head"><div class="dot" style="background:var(--c1)"></div>💻 user_sessions</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> user_id</div>
+        <div class="field uk"><span class="field-badge badge-uk">UK</span> session_token</div>
+        <div class="field">ip_address / user_agent</div>
+        <div class="field">device_type / browser</div>
+        <div class="field">last_activity</div>
+        <div class="field">expires_at</div>
+      </div>
+    </div>
+
+    <div class="entity s1" id="password_resets" style="left:560px;top:510px;min-width:180px">
+      <div class="entity-head"><div class="dot" style="background:var(--c1)"></div>🔑 password_resets</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field">email VARCHAR</div>
+        <div class="field">token VARCHAR</div>
+        <div class="field">expires_at</div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- SECTION 2: PRODUCTS & CATALOG (Violet) -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="section-label" style="left:830px;top:30px;color:var(--c2)">02 · Products &amp; Catalog</div>
+
+    <div class="entity s2" id="categories" style="left:830px;top:80px;min-width:200px">
+      <div class="entity-head"><div class="dot" style="background:var(--c2)"></div>📂 categories</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> parent_id (self)</div>
+        <div class="field uk"><span class="field-badge badge-uk">UK</span> slug VARCHAR</div>
+        <div class="field">name VARCHAR</div>
+        <div class="field">icon / image_url</div>
+        <div class="field">display_order INT</div>
+        <div class="field">is_active BOOL</div>
+        <div class="field">product_count INT</div>
+      </div>
+    </div>
+
+    <div class="entity s2" id="category_attributes" style="left:830px;top:340px;min-width:190px">
+      <div class="entity-head"><div class="dot" style="background:var(--c2)"></div>🔗 category_attributes</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> category_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> attribute_id</div>
+        <div class="field">is_required BOOL</div>
+        <div class="field">display_order INT</div>
+      </div>
+    </div>
+
+    <div class="entity s2" id="attributes" style="left:1100px;top:340px;min-width:190px">
+      <div class="entity-head"><div class="dot" style="background:var(--c2)"></div>⚙️ attributes</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field uk"><span class="field-badge badge-uk">UK</span> slug VARCHAR</div>
+        <div class="field">name VARCHAR</div>
+        <div class="field">type ENUM</div>
+        <div class="field">is_global BOOL</div>
+        <div class="field">is_filterable BOOL</div>
+      </div>
+    </div>
+
+    <div class="entity s2" id="attribute_values" style="left:1100px;top:540px;min-width:190px">
+      <div class="entity-head"><div class="dot" style="background:var(--c2)"></div>🎨 attribute_values</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> attribute_id</div>
+        <div class="field">value VARCHAR</div>
+        <div class="field">display_value</div>
+        <div class="field">color_code VARCHAR</div>
+        <div class="field">display_order INT</div>
+      </div>
+    </div>
+
+    <div class="entity s2" id="products" style="left:1100px;top:80px;min-width:210px">
+      <div class="entity-head"><div class="dot" style="background:var(--c2)"></div>📦 products</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> vendor_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> category_id</div>
+        <div class="field uk"><span class="field-badge badge-uk">UK</span> sku VARCHAR</div>
+        <div class="field">name / slug</div>
+        <div class="field">price / sale_price</div>
+        <div class="field">stock_quantity INT</div>
+        <div class="field">type / status / visibility</div>
+        <div class="field">weight / dimensions</div>
+        <div class="field">rating_average DECIMAL</div>
+        <div class="field">is_featured BOOL</div>
+        <div class="field">view_count / sale_count</div>
+        <div class="field">published_at / deleted_at</div>
+      </div>
+    </div>
+
+    <div class="entity s2" id="product_images" style="left:1370px;top:80px;min-width:185px">
+      <div class="entity-head"><div class="dot" style="background:var(--c2)"></div>🖼️ product_images</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> product_id</div>
+        <div class="field">image_url VARCHAR</div>
+        <div class="field">thumbnail_url</div>
+        <div class="field">alt_text VARCHAR</div>
+        <div class="field">is_primary BOOL</div>
+        <div class="field">display_order INT</div>
+      </div>
+    </div>
+
+    <div class="entity s2" id="product_variants" style="left:1370px;top:310px;min-width:185px">
+      <div class="entity-head"><div class="dot" style="background:var(--c2)"></div>🔀 product_variants</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> product_id</div>
+        <div class="field uk"><span class="field-badge badge-uk">UK</span> sku VARCHAR</div>
+        <div class="field">variant_name VARCHAR</div>
+        <div class="field">price / sale_price</div>
+        <div class="field">stock_quantity INT</div>
+        <div class="field">weight DECIMAL</div>
+        <div class="field">is_active BOOL</div>
+      </div>
+    </div>
+
+    <div class="entity s2" id="product_variant_attributes" style="left:1370px;top:540px;min-width:200px">
+      <div class="entity-head"><div class="dot" style="background:var(--c2)"></div>🏷️ product_variant_attr</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> variant_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> attribute_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> attribute_value_id</div>
+      </div>
+    </div>
+
+    <div class="entity s2" id="product_attributes" style="left:1370px;top:700px;min-width:185px">
+      <div class="entity-head"><div class="dot" style="background:var(--c2)"></div>📋 product_attributes</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> product_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> attribute_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> attribute_value_id</div>
+        <div class="field">custom_value TEXT</div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- SECTION 3: ORDERS (Emerald) -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="section-label" style="left:1660px;top:30px;color:var(--c3)">03 · Orders &amp; Transactions</div>
+
+    <div class="entity s3" id="orders" style="left:1680px;top:80px;min-width:210px">
+      <div class="entity-head"><div class="dot" style="background:var(--c3)"></div>🛒 orders</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field uk"><span class="field-badge badge-uk">UK</span> order_number</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> user_id</div>
+        <div class="field">guest_email VARCHAR</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> shipping_address_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> billing_address_id</div>
+        <div class="field">subtotal / discount</div>
+        <div class="field">shipping / tax / total</div>
+        <div class="field">status ENUM</div>
+        <div class="field">payment_status ENUM</div>
+        <div class="field">payment_method</div>
+        <div class="field">coupon_code</div>
+        <div class="field">paid_at / shipped_at</div>
+        <div class="field">delivered_at</div>
+      </div>
+    </div>
+
+    <div class="entity s3" id="order_addresses" style="left:1660px;top:430px;min-width:195px">
+      <div class="entity-head"><div class="dot" style="background:var(--c3)"></div>📮 order_addresses</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field">full_name / email</div>
+        <div class="field">phone VARCHAR</div>
+        <div class="field">address_line1 / city</div>
+        <div class="field">state / postal_code</div>
+        <div class="field">country / country_code</div>
+      </div>
+    </div>
+
+    <div class="entity s3" id="order_items" style="left:1960px;top:80px;min-width:205px">
+      <div class="entity-head"><div class="dot" style="background:var(--c3)"></div>🧾 order_items</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> order_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> product_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> variant_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> vendor_id</div>
+        <div class="field">product_name / sku</div>
+        <div class="field">unit_price / quantity</div>
+        <div class="field">subtotal / discount / tax</div>
+        <div class="field">total DECIMAL</div>
+        <div class="field">commission_rate</div>
+        <div class="field">commission_amount</div>
+        <div class="field">vendor_earnings</div>
+      </div>
+    </div>
+
+    <div class="entity s3" id="order_status_history" style="left:1960px;top:380px;min-width:195px">
+      <div class="entity-head"><div class="dot" style="background:var(--c3)"></div>📊 order_status_history</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> order_id</div>
+        <div class="field">old_status / new_status</div>
+        <div class="field">comment TEXT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> changed_by</div>
+      </div>
+    </div>
+
+    <div class="entity s3" id="order_notes" style="left:1960px;top:570px;min-width:185px">
+      <div class="entity-head"><div class="dot" style="background:var(--c3)"></div>📝 order_notes</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> order_id</div>
+        <div class="field">note TEXT</div>
+        <div class="field">is_customer_note BOOL</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> created_by</div>
+      </div>
+    </div>
+
+    <div class="entity s3" id="refunds" style="left:1660px;top:660px;min-width:195px">
+      <div class="entity-head"><div class="dot" style="background:var(--c3)"></div>💸 refunds</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> order_id</div>
+        <div class="field uk"><span class="field-badge badge-uk">UK</span> refund_number</div>
+        <div class="field">refund_amount DECIMAL</div>
+        <div class="field">reason ENUM</div>
+        <div class="field">status ENUM</div>
+        <div class="field">refund_method ENUM</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> processed_by</div>
+      </div>
+    </div>
+
+    <div class="entity s3" id="refund_items" style="left:1960px;top:760px;min-width:185px">
+      <div class="entity-head"><div class="dot" style="background:var(--c3)"></div>📋 refund_items</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> refund_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> order_item_id</div>
+        <div class="field">quantity INT</div>
+        <div class="field">refund_amount DECIMAL</div>
+      </div>
+    </div>
+
+    <div class="entity s3" id="transactions" style="left:1660px;top:910px;min-width:195px">
+      <div class="entity-head"><div class="dot" style="background:var(--c3)"></div>💳 transactions</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> order_id</div>
+        <div class="field uk"><span class="field-badge badge-uk">UK</span> transaction_id</div>
+        <div class="field">type ENUM</div>
+        <div class="field">amount / currency</div>
+        <div class="field">payment_gateway</div>
+        <div class="field">status ENUM</div>
+        <div class="field">processed_at</div>
+      </div>
+    </div>
+
+    <div class="entity s3" id="abandoned_carts" style="left:1960px;top:960px;min-width:190px">
+      <div class="entity-head"><div class="dot" style="background:var(--c3)"></div>🛒 abandoned_carts</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> user_id</div>
+        <div class="field">session_id / email</div>
+        <div class="field">cart_data JSON</div>
+        <div class="field">total_amount DECIMAL</div>
+        <div class="field">recovered BOOL</div>
+        <div class="field">reminder_sent_count</div>
+      </div>
+    </div>
+
+    <div class="entity s3" id="wishlists" style="left:1660px;top:1130px;min-width:185px">
+      <div class="entity-head"><div class="dot" style="background:var(--c3)"></div>❤️ wishlists</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> user_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> product_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> variant_id</div>
+        <div class="field">added_at TIMESTAMP</div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- SECTION 4: INVENTORY (Orange) -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="section-label" style="left:830px;top:820px;color:var(--c4)">04 · Inventory &amp; Stock</div>
+
+    <div class="entity s4" id="inventory_logs" style="left:830px;top:860px;min-width:195px">
+      <div class="entity-head"><div class="dot" style="background:var(--c4)"></div>📈 inventory_logs</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> product_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> variant_id</div>
+        <div class="field">type ENUM</div>
+        <div class="field">quantity_before INT</div>
+        <div class="field">quantity_change INT</div>
+        <div class="field">quantity_after INT</div>
+        <div class="field">reference_type</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> created_by</div>
+      </div>
+    </div>
+
+    <div class="entity s4" id="stock_alerts" style="left:1100px;top:860px;min-width:185px">
+      <div class="entity-head"><div class="dot" style="background:var(--c4)"></div>🔔 stock_alerts</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> product_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> variant_id</div>
+        <div class="field">alert_type ENUM</div>
+        <div class="field">current_quantity INT</div>
+        <div class="field">threshold_quantity</div>
+        <div class="field">is_resolved BOOL</div>
+      </div>
+    </div>
+
+    <div class="entity s4" id="warehouses" style="left:830px;top:1100px;min-width:190px">
+      <div class="entity-head"><div class="dot" style="background:var(--c4)"></div>🏭 warehouses</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> vendor_id</div>
+        <div class="field uk"><span class="field-badge badge-uk">UK</span> code VARCHAR</div>
+        <div class="field">name VARCHAR</div>
+        <div class="field">address / city / country</div>
+        <div class="field">contact_person</div>
+        <div class="field">is_active / is_primary</div>
+      </div>
+    </div>
+
+    <div class="entity s4" id="warehouse_inventory" style="left:1100px;top:1100px;min-width:190px">
+      <div class="entity-head"><div class="dot" style="background:var(--c4)"></div>📦 warehouse_inventory</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> warehouse_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> product_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> variant_id</div>
+        <div class="field">quantity INT</div>
+        <div class="field">reserved_quantity</div>
+        <div class="field">available_quantity</div>
+      </div>
+    </div>
+
+    <div class="entity s4" id="inventory_reservations" style="left:830px;top:1340px;min-width:195px">
+      <div class="entity-head"><div class="dot" style="background:var(--c4)"></div>🔒 inv_reservations</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> order_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> order_item_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> product_id</div>
+        <div class="field">quantity INT</div>
+        <div class="field">status ENUM</div>
+        <div class="field">expires_at TIMESTAMP</div>
+      </div>
+    </div>
+
+    <div class="entity s4" id="stock_transfers" style="left:1100px;top:1340px;min-width:195px">
+      <div class="entity-head"><div class="dot" style="background:var(--c4)"></div>↔️ stock_transfers</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field uk"><span class="field-badge badge-uk">UK</span> transfer_number</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> from_warehouse_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> to_warehouse_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> product_id</div>
+        <div class="field">quantity / status</div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- SECTION 5: VENDORS & PAYMENTS (Pink) -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="section-label" style="left:30px;top:820px;color:var(--c5)">05 · Vendors &amp; Payments</div>
+
+    <div class="entity s5" id="vendors" style="left:30px;top:860px;min-width:210px">
+      <div class="entity-head"><div class="dot" style="background:var(--c5)"></div>🏪 vendors</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> user_id</div>
+        <div class="field uk"><span class="field-badge badge-uk">UK</span> store_slug</div>
+        <div class="field">store_name / store_email</div>
+        <div class="field">business_name / type</div>
+        <div class="field">tax_id VARCHAR</div>
+        <div class="field">commission_rate DECIMAL</div>
+        <div class="field">status / verified BOOL</div>
+        <div class="field">total_sales / total_orders</div>
+        <div class="field">average_rating DECIMAL</div>
+        <div class="field">logo_url / banner_url</div>
+        <div class="field">website / social URLs</div>
+      </div>
+    </div>
+
+    <div class="entity s5" id="vendor_bank_accounts" style="left:30px;top:1150px;min-width:200px">
+      <div class="entity-head"><div class="dot" style="background:var(--c5)"></div>🏦 vendor_bank_accounts</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> vendor_id</div>
+        <div class="field">account_holder_name</div>
+        <div class="field">bank_name / account_no</div>
+        <div class="field">routing_number</div>
+        <div class="field">account_type ENUM</div>
+        <div class="field">swift_code / iban</div>
+        <div class="field">is_verified / is_default</div>
+      </div>
+    </div>
+
+    <div class="entity s5" id="vendor_payouts" style="left:30px;top:1410px;min-width:200px">
+      <div class="entity-head"><div class="dot" style="background:var(--c5)"></div>💰 vendor_payouts</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> vendor_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> bank_account_id</div>
+        <div class="field uk"><span class="field-badge badge-uk">UK</span> payout_reference</div>
+        <div class="field">gross / commission / net</div>
+        <div class="field">period_from / period_to</div>
+        <div class="field">status ENUM</div>
+        <div class="field">payment_method ENUM</div>
+        <div class="field">processed_at</div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- SECTION 6: SHIPPING (Yellow) -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="section-label" style="left:2260px;top:30px;color:var(--c6)">06 · Shipping &amp; Fulfillment</div>
+
+    <div class="entity s6" id="shipping_zones" style="left:2260px;top:80px;min-width:185px">
+      <div class="entity-head"><div class="dot" style="background:var(--c6)"></div>🌍 shipping_zones</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> vendor_id</div>
+        <div class="field">name VARCHAR</div>
+        <div class="field">countries JSON</div>
+        <div class="field">is_active BOOL</div>
+      </div>
+    </div>
+
+    <div class="entity s6" id="shipping_methods" style="left:2260px;top:260px;min-width:190px">
+      <div class="entity-head"><div class="dot" style="background:var(--c6)"></div>🚚 shipping_methods</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> shipping_zone_id</div>
+        <div class="field">name VARCHAR</div>
+        <div class="field">rate_type ENUM</div>
+        <div class="field">flat_rate / rate_per_kg</div>
+        <div class="field">free_shipping_threshold</div>
+        <div class="field">min/max delivery days</div>
+        <div class="field">is_active BOOL</div>
+      </div>
+    </div>
+
+    <div class="entity s6" id="shipments" style="left:2260px;top:510px;min-width:195px">
+      <div class="entity-head"><div class="dot" style="background:var(--c6)"></div>📬 shipments</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> order_id</div>
+        <div class="field uk"><span class="field-badge badge-uk">UK</span> shipment_number</div>
+        <div class="field">carrier / tracking_number</div>
+        <div class="field">tracking_url VARCHAR</div>
+        <div class="field">status ENUM</div>
+        <div class="field">weight / dimensions</div>
+        <div class="field">shipping_cost DECIMAL</div>
+        <div class="field">shipped_at / delivered_at</div>
+      </div>
+    </div>
+
+    <div class="entity s6" id="shipment_items" style="left:2260px;top:780px;min-width:185px">
+      <div class="entity-head"><div class="dot" style="background:var(--c6)"></div>📦 shipment_items</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> shipment_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> order_item_id</div>
+        <div class="field">quantity INT</div>
+      </div>
+    </div>
+
+    <div class="entity s6" id="shipment_tracking_events" style="left:2260px;top:940px;min-width:200px">
+      <div class="entity-head"><div class="dot" style="background:var(--c6)"></div>📡 tracking_events</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> shipment_id</div>
+        <div class="field">status VARCHAR</div>
+        <div class="field">description TEXT</div>
+        <div class="field">location VARCHAR</div>
+        <div class="field">event_time TIMESTAMP</div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- SECTION 7: REVIEWS (Red) -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="section-label" style="left:2560px;top:30px;color:var(--c7)">07 · Reviews &amp; Ratings</div>
+
+    <div class="entity s7" id="reviews" style="left:2570px;top:80px;min-width:195px">
+      <div class="entity-head"><div class="dot" style="background:var(--c7)"></div>⭐ reviews</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> product_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> user_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> order_id</div>
+        <div class="field">rating TINYINT (1-5)</div>
+        <div class="field">title / review_text</div>
+        <div class="field">is_verified_purchase</div>
+        <div class="field">status ENUM</div>
+        <div class="field">helpful_count INT</div>
+        <div class="field">has_vendor_response</div>
+      </div>
+    </div>
+
+    <div class="entity s7" id="review_images" style="left:2570px;top:370px;min-width:185px">
+      <div class="entity-head"><div class="dot" style="background:var(--c7)"></div>🖼️ review_images</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> review_id</div>
+        <div class="field">image_url VARCHAR</div>
+        <div class="field">thumbnail_url</div>
+        <div class="field">display_order INT</div>
+      </div>
+    </div>
+
+    <div class="entity s7" id="review_responses" style="left:2570px;top:540px;min-width:185px">
+      <div class="entity-head"><div class="dot" style="background:var(--c7)"></div>💬 review_responses</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> review_id</div>
+        <div class="field">response_text TEXT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> responder_id</div>
+        <div class="field">created_at / updated_at</div>
+      </div>
+    </div>
+
+    <div class="entity s7" id="review_votes" style="left:2570px;top:710px;min-width:180px">
+      <div class="entity-head"><div class="dot" style="background:var(--c7)"></div>👍 review_votes</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> review_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> user_id</div>
+        <div class="field">vote ENUM (helpful)</div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- SECTION 8: MARKETING (Teal) -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="section-label" style="left:2570px;top:860px;color:var(--c8)">08 · Marketing &amp; Promotions</div>
+
+    <div class="entity s8" id="coupons" style="left:2570px;top:900px;min-width:200px">
+      <div class="entity-head"><div class="dot" style="background:var(--c8)"></div>🎟️ coupons</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> vendor_id</div>
+        <div class="field uk"><span class="field-badge badge-uk">UK</span> code VARCHAR</div>
+        <div class="field">name / description</div>
+        <div class="field">discount_type ENUM</div>
+        <div class="field">discount_value</div>
+        <div class="field">min_order_amount</div>
+        <div class="field">max_uses / times_used</div>
+        <div class="field">valid_from / valid_until</div>
+        <div class="field">is_active / auto_apply</div>
+      </div>
+    </div>
+
+    <div class="entity s8" id="coupon_products" style="left:2840px;top:900px;min-width:180px">
+      <div class="entity-head"><div class="dot" style="background:var(--c8)"></div>🔗 coupon_products</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> coupon_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> product_id</div>
+        <div class="field">is_excluded BOOL</div>
+      </div>
+    </div>
+
+    <div class="entity s8" id="coupon_categories" style="left:2840px;top:1060px;min-width:185px">
+      <div class="entity-head"><div class="dot" style="background:var(--c8)"></div>🔗 coupon_categories</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> coupon_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> category_id</div>
+        <div class="field">is_excluded BOOL</div>
+      </div>
+    </div>
+
+    <div class="entity s8" id="coupon_usage" style="left:2570px;top:1180px;min-width:185px">
+      <div class="entity-head"><div class="dot" style="background:var(--c8)"></div>📊 coupon_usage</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> coupon_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> order_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> user_id</div>
+        <div class="field">discount_amount DECIMAL</div>
+        <div class="field">used_at TIMESTAMP</div>
+      </div>
+    </div>
+
+    <div class="entity s8" id="promotions" style="left:2570px;top:1380px;min-width:200px">
+      <div class="entity-head"><div class="dot" style="background:var(--c8)"></div>🎯 promotions</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> vendor_id</div>
+        <div class="field">name / slug</div>
+        <div class="field">type ENUM</div>
+        <div class="field">discount_value</div>
+        <div class="field">buy_qty / get_qty (BOGO)</div>
+        <div class="field">badge_text / banner</div>
+        <div class="field">status ENUM</div>
+        <div class="field">starts_at / ends_at</div>
+      </div>
+    </div>
+
+    <div class="entity s8" id="promotion_products" style="left:2840px;top:1380px;min-width:190px">
+      <div class="entity-head"><div class="dot" style="background:var(--c8)"></div>🔗 promotion_products</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> promotion_id</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> product_id</div>
+        <div class="field">custom_discount DECIMAL</div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- SECTION 9: CONTENT (Purple) -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="section-label" style="left:30px;top:1620px;color:var(--c9)">09 · Content Management</div>
+
+    <div class="entity s9" id="pages" style="left:30px;top:1660px;min-width:195px">
+      <div class="entity-head"><div class="dot" style="background:var(--c9)"></div>📄 pages</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field uk"><span class="field-badge badge-uk">UK</span> slug VARCHAR</div>
+        <div class="field">title VARCHAR</div>
+        <div class="field">content LONGTEXT</div>
+        <div class="field">meta_title / meta_desc</div>
+        <div class="field">template VARCHAR</div>
+        <div class="field">is_published BOOL</div>
+        <div class="field">show_in_footer/header</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> created_by</div>
+      </div>
+    </div>
+
+    <div class="entity s9" id="banners" style="left:300px;top:1660px;min-width:195px">
+      <div class="entity-head"><div class="dot" style="background:var(--c9)"></div>🖼️ banners</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field">title VARCHAR</div>
+        <div class="field">image_url / mobile_image</div>
+        <div class="field">link_url / link_text</div>
+        <div class="field">position ENUM</div>
+        <div class="field">is_active BOOL</div>
+        <div class="field">starts_at / ends_at</div>
+        <div class="field">impression_count INT</div>
+        <div class="field">click_count INT</div>
+      </div>
+    </div>
+
+    <div class="entity s9" id="blog_posts" style="left:570px;top:1660px;min-width:195px">
+      <div class="entity-head"><div class="dot" style="background:var(--c9)"></div>✍️ blog_posts</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field uk"><span class="field-badge badge-uk">UK</span> slug VARCHAR</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> author_id</div>
+        <div class="field">title / excerpt</div>
+        <div class="field">content LONGTEXT</div>
+        <div class="field">featured_image_url</div>
+        <div class="field">category / tags JSON</div>
+        <div class="field">status ENUM</div>
+        <div class="field">view_count / published_at</div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- SECTION 10: SYSTEM & LOGS (Slate) -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="section-label" style="left:830px;top:1620px;color:var(--c10)">10 · System &amp; Logs</div>
+
+    <div class="entity s10" id="audit_logs" style="left:830px;top:1660px;min-width:195px">
+      <div class="entity-head"><div class="dot" style="background:var(--c10)"></div>📋 audit_logs</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> user_id</div>
+        <div class="field">user_email / user_type</div>
+        <div class="field">action VARCHAR</div>
+        <div class="field">entity_type / entity_id</div>
+        <div class="field">old_values / new_values</div>
+        <div class="field">ip_address / url</div>
+      </div>
+    </div>
+
+    <div class="entity s10" id="activity_logs" style="left:1100px;top:1660px;min-width:190px">
+      <div class="entity-head"><div class="dot" style="background:var(--c10)"></div>📊 activity_logs</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> user_id</div>
+        <div class="field">activity_type VARCHAR</div>
+        <div class="field">description TEXT</div>
+        <div class="field">properties JSON</div>
+        <div class="field">ip_address</div>
+      </div>
+    </div>
+
+    <div class="entity s10" id="notifications" style="left:1370px;top:1660px;min-width:185px">
+      <div class="entity-head"><div class="dot" style="background:var(--c10)"></div>🔔 notifications</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id CHAR(36) UUID</div>
+        <div class="field">type VARCHAR</div>
+        <div class="field">notifiable_type</div>
+        <div class="field">notifiable_id BIGINT</div>
+        <div class="field">data JSON</div>
+        <div class="field">read_at TIMESTAMP</div>
+      </div>
+    </div>
+
+    <div class="entity s10" id="email_logs" style="left:1640px;top:1660px;min-width:190px">
+      <div class="entity-head"><div class="dot" style="background:var(--c10)"></div>📧 email_logs</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field">to_email / from_email</div>
+        <div class="field">subject VARCHAR</div>
+        <div class="field">email_type VARCHAR</div>
+        <div class="field">status ENUM</div>
+        <div class="field">sent_at / opened_at</div>
+      </div>
+    </div>
+
+    <div class="entity s10" id="search_logs" style="left:1910px;top:1660px;min-width:185px">
+      <div class="entity-head"><div class="dot" style="background:var(--c10)"></div>🔍 search_logs</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> user_id</div>
+        <div class="field">search_query VARCHAR</div>
+        <div class="field">results_count INT</div>
+        <div class="field">filters JSON</div>
+        <div class="field">ip_address</div>
+      </div>
+    </div>
+
+    <div class="entity s10" id="fraud_checks" style="left:2180px;top:1660px;min-width:190px">
+      <div class="entity-head"><div class="dot" style="background:var(--c10)"></div>🛡️ fraud_checks</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> order_id</div>
+        <div class="field">risk_score INT (0-100)</div>
+        <div class="field">risk_level ENUM</div>
+        <div class="field">checks_performed JSON</div>
+        <div class="field">decision ENUM</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> reviewed_by</div>
+      </div>
+    </div>
+
+    <div class="entity s10" id="ip_blocks" style="left:2450px;top:1660px;min-width:185px">
+      <div class="entity-head"><div class="dot" style="background:var(--c10)"></div>🚫 ip_blocks</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field uk"><span class="field-badge badge-uk">UK</span> ip_address</div>
+        <div class="field">reason TEXT</div>
+        <div class="field">block_type ENUM</div>
+        <div class="field">is_active / expires_at</div>
+        <div class="field fk"><span class="field-badge badge-fk">FK</span> blocked_by</div>
+      </div>
+    </div>
+
+    <div class="entity s10" id="settings" style="left:2720px;top:1660px;min-width:185px">
+      <div class="entity-head"><div class="dot" style="background:var(--c10)"></div>⚙️ settings</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field uk"><span class="field-badge badge-uk">UK</span> key VARCHAR</div>
+        <div class="field">value LONGTEXT</div>
+        <div class="field">type ENUM</div>
+        <div class="field">group VARCHAR</div>
+        <div class="field">description TEXT</div>
+      </div>
+    </div>
+
+    <div class="entity s10" id="failed_jobs" style="left:2990px;top:1660px;min-width:185px">
+      <div class="entity-head"><div class="dot" style="background:var(--c10)"></div>❌ failed_jobs</div>
+      <div class="entity-fields">
+        <div class="field pk"><span class="field-badge badge-pk">PK</span> id BIGINT</div>
+        <div class="field uk"><span class="field-badge badge-uk">UK</span> uuid VARCHAR</div>
+        <div class="field">connection / queue</div>
+        <div class="field">payload LONGTEXT</div>
+        <div class="field">exception LONGTEXT</div>
+        <div class="field">failed_at TIMESTAMP</div>
+      </div>
+    </div>
+
+  </div><!-- end canvas -->
+</div><!-- end canvas-wrap -->
+
+<!-- CONTROLS -->
+<div class="controls">
+  <button class="ctrl-btn" id="zoomIn" title="Zoom In">+</button>
+  <button class="ctrl-btn" id="zoomOut" title="Zoom Out">−</button>
+  <button class="ctrl-btn" id="resetZoom" title="Reset">⌂</button>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+// ── RELATIONSHIP LINES ──
+const rels = [
+  // S1: User & Auth
+  { from: 'users', to: 'user_roles',   color: '#38bdf8', label: '1:N' },
+  { from: 'user_roles', to: 'roles',   color: '#38bdf8', label: 'N:1' },
+  { from: 'roles', to: 'role_permissions', color: '#38bdf8', label: '1:N' },
+  { from: 'role_permissions', to: 'permissions', color: '#38bdf8', label: 'N:1' },
+  { from: 'users', to: 'user_addresses', color: '#38bdf8', label: '1:N' },
+  { from: 'users', to: 'user_sessions',  color: '#38bdf8', label: '1:N' },
+
+  // S2: Products
+  { from: 'categories', to: 'category_attributes', color: '#a78bfa', label: '1:N' },
+  { from: 'category_attributes', to: 'attributes',  color: '#a78bfa', label: 'N:1' },
+  { from: 'attributes', to: 'attribute_values',      color: '#a78bfa', label: '1:N' },
+  { from: 'categories', to: 'products',              color: '#a78bfa', label: '1:N' },
+  { from: 'products', to: 'product_images',          color: '#a78bfa', label: '1:N' },
+  { from: 'products', to: 'product_variants',        color: '#a78bfa', label: '1:N' },
+  { from: 'product_variants', to: 'product_variant_attributes', color: '#a78bfa', label: '1:N' },
+  { from: 'products', to: 'product_attributes',      color: '#a78bfa', label: '1:N' },
+
+  // S3: Orders
+  { from: 'orders', to: 'order_items',          color: '#34d399', label: '1:N' },
+  { from: 'orders', to: 'order_status_history', color: '#34d399', label: '1:N' },
+  { from: 'orders', to: 'order_notes',          color: '#34d399', label: '1:N' },
+  { from: 'orders', to: 'refunds',              color: '#34d399', label: '1:N' },
+  { from: 'refunds', to: 'refund_items',        color: '#34d399', label: '1:N' },
+  { from: 'orders', to: 'transactions',         color: '#34d399', label: '1:N' },
+  { from: 'order_addresses', to: 'orders',      color: '#34d399', label: '1:N' },
+
+  // S4: Inventory
+  { from: 'products', to: 'inventory_logs',     color: '#fb923c', label: '1:N' },
+  { from: 'products', to: 'stock_alerts',       color: '#fb923c', label: '1:N' },
+  { from: 'warehouses', to: 'warehouse_inventory', color: '#fb923c', label: '1:N' },
+  { from: 'warehouses', to: 'stock_transfers',  color: '#fb923c', label: '1:N' },
+
+  // S5: Vendors
+  { from: 'vendors', to: 'vendor_bank_accounts', color: '#f472b6', label: '1:N' },
+  { from: 'vendors', to: 'vendor_payouts',       color: '#f472b6', label: '1:N' },
+  { from: 'users', to: 'vendors',               color: '#f472b6', label: '1:1' },
+
+  // S6: Shipping
+  { from: 'shipping_zones', to: 'shipping_methods',    color: '#facc15', label: '1:N' },
+  { from: 'orders', to: 'shipments',                   color: '#facc15', label: '1:N' },
+  { from: 'shipments', to: 'shipment_items',           color: '#facc15', label: '1:N' },
+  { from: 'shipments', to: 'shipment_tracking_events', color: '#facc15', label: '1:N' },
+
+  // S7: Reviews
+  { from: 'products', to: 'reviews',          color: '#f87171', label: '1:N' },
+  { from: 'reviews', to: 'review_images',     color: '#f87171', label: '1:N' },
+  { from: 'reviews', to: 'review_responses',  color: '#f87171', label: '1:N' },
+  { from: 'reviews', to: 'review_votes',      color: '#f87171', label: '1:N' },
+
+  // S8: Marketing
+  { from: 'coupons', to: 'coupon_products',   color: '#2dd4bf', label: '1:N' },
+  { from: 'coupons', to: 'coupon_categories', color: '#2dd4bf', label: '1:N' },
+  { from: 'coupons', to: 'coupon_usage',      color: '#2dd4bf', label: '1:N' },
+  { from: 'promotions', to: 'promotion_products', color: '#2dd4bf', label: '1:N' },
+];
+
+function getCenter(el) {
+  const canvas = document.getElementById('canvas');
+  const cRect = canvas.getBoundingClientRect();
+  const eRect = el.getBoundingClientRect();
+  const scale = currentScale;
+  const canvasEl = canvas;
+
+  // Get position relative to canvas
+  const left = parseFloat(el.style.left) || 0;
+  const top  = parseFloat(el.style.top)  || 0;
+  const w = el.offsetWidth;
+  const h = el.offsetHeight;
+  return { x: left + w / 2, y: top + h / 2, w, h, left, top };
+}
+
+function getEdge(el, targetX, targetY) {
+  const c = getCenter(el);
+  const dx = targetX - c.x;
+  const dy = targetY - c.y;
+  const angle = Math.atan2(dy, dx);
+  const hw = c.w / 2;
+  const hh = c.h / 2;
+  let ex, ey;
+  if (Math.abs(dx) * hh > Math.abs(dy) * hw) {
+    ex = c.x + (dx > 0 ? hw : -hw);
+    ey = c.y + (dx > 0 ? hw : -hw) * Math.tan(angle);
+  } else {
+    ey = c.y + (dy > 0 ? hh : -hh);
+    ex = c.x + (dy > 0 ? hh : -hh) / Math.tan(angle);
+  }
+  return { x: ex, y: ey };
+}
+
+function drawConnections() {
+  const svg = document.getElementById('svgConn');
+  svg.innerHTML = '';
+
+  // Add defs for arrowheads
+  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+
+  const colors = ['#38bdf8','#a78bfa','#34d399','#fb923c','#f472b6','#facc15','#f87171','#2dd4bf','#c084fc','#94a3b8'];
+  colors.forEach(col => {
+    const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+    marker.setAttribute('id', 'arrow-' + col.replace('#',''));
+    marker.setAttribute('markerWidth', '6');
+    marker.setAttribute('markerHeight', '6');
+    marker.setAttribute('refX', '5');
+    marker.setAttribute('refY', '3');
+    marker.setAttribute('orient', 'auto');
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', 'M0,0 L0,6 L6,3 z');
+    path.setAttribute('fill', col);
+    path.setAttribute('opacity', '0.7');
+    marker.appendChild(path);
+    defs.appendChild(marker);
+  });
+  svg.appendChild(defs);
+
+  rels.forEach(rel => {
+    const fromEl = document.getElementById(rel.from);
+    const toEl   = document.getElementById(rel.to);
+    if (!fromEl || !toEl) return;
+
+    const fc = getCenter(fromEl);
+    const tc = getCenter(toEl);
+    const fe = getEdge(fromEl, tc.x, tc.y);
+    const te = getEdge(toEl, fc.x, fc.y);
+
+    // Bezier curve
+    const midX = (fe.x + te.x) / 2;
+    const midY = (fe.y + te.y) / 2;
+    const ctrl1X = fe.x + (midX - fe.x) * 0.5;
+    const ctrl1Y = fe.y;
+    const ctrl2X = te.x + (midX - te.x) * 0.5;
+    const ctrl2Y = te.y;
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', `M ${fe.x} ${fe.y} C ${ctrl1X} ${ctrl1Y}, ${ctrl2X} ${ctrl2Y}, ${te.x} ${te.y}`);
+    path.setAttribute('stroke', rel.color);
+    path.setAttribute('stroke-width', '1.5');
+    path.setAttribute('fill', 'none');
+    path.setAttribute('opacity', '0.45');
+    path.setAttribute('marker-end', `url(#arrow-${rel.color.replace('#','')})`);
+    path.style.transition = 'opacity 0.2s';
+    path.addEventListener('mouseenter', () => { path.setAttribute('opacity', '0.9'); path.setAttribute('stroke-width','2.5'); });
+    path.addEventListener('mouseleave', () => { path.setAttribute('opacity', '0.45'); path.setAttribute('stroke-width','1.5'); });
+    svg.appendChild(path);
+
+    // Label
+    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    text.setAttribute('x', midX);
+    text.setAttribute('y', midY - 5);
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('font-size', '9');
+    text.setAttribute('font-family', 'IBM Plex Mono, monospace');
+    text.setAttribute('fill', rel.color);
+    text.setAttribute('opacity', '0.6');
+    text.textContent = rel.label;
+    svg.appendChild(text);
+  });
+}
+
+// ── PAN & ZOOM ──
+let currentScale = 0.55;
+let isDragging = false;
+let startX, startY, scrollLeft, scrollTop;
+const wrap = document.getElementById('canvasWrap');
+
+wrap.addEventListener('mousedown', e => {
+  isDragging = true;
+  startX = e.pageX - wrap.offsetLeft;
+  startY = e.pageY - wrap.offsetTop;
+  scrollLeft = wrap.scrollLeft;
+  scrollTop  = wrap.scrollTop;
+});
+document.addEventListener('mouseup', () => { isDragging = false; });
+document.addEventListener('mousemove', e => {
+  if (!isDragging) return;
+  e.preventDefault();
+  wrap.scrollLeft = scrollLeft - (e.pageX - wrap.offsetLeft - startX);
+  wrap.scrollTop  = scrollTop  - (e.pageY - wrap.offsetTop  - startY);
+});
+
+wrap.addEventListener('wheel', e => {
+  e.preventDefault();
+  const delta = e.deltaY > 0 ? -0.05 : 0.05;
+  currentScale = Math.min(2, Math.max(0.2, currentScale + delta));
+  document.getElementById('canvas').style.transform = `scale(${currentScale})`;
+  drawConnections();
+}, { passive: false });
+
+document.getElementById('zoomIn').addEventListener('click', () => {
+  currentScale = Math.min(2, currentScale + 0.1);
+  document.getElementById('canvas').style.transform = `scale(${currentScale})`;
+  drawConnections();
+});
+document.getElementById('zoomOut').addEventListener('click', () => {
+  currentScale = Math.max(0.2, currentScale - 0.1);
+  document.getElementById('canvas').style.transform = `scale(${currentScale})`;
+  drawConnections();
+});
+document.getElementById('resetZoom').addEventListener('click', () => {
+  currentScale = 0.55;
+  document.getElementById('canvas').style.transform = `scale(${currentScale})`;
+  wrap.scrollLeft = 0; wrap.scrollTop = 0;
+  drawConnections();
+});
+
+// Initial scale
+document.getElementById('canvas').style.transform = `scale(${currentScale})`;
+document.getElementById('canvas').style.transformOrigin = '0 0';
+wrap.style.height = (window.innerHeight - 130) + 'px';
+wrap.style.overflow = 'auto';
+
+// Draw after render
+setTimeout(drawConnections, 200);
+window.addEventListener('resize', () => { wrap.style.height = (window.innerHeight - 130) + 'px'; });
+</script>
+</body>
+</html>

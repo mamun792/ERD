@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Form - Dynamic</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+
+        .form-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #e6e6e6;
+            padding: 20px 25px;
+            border-radius: 4px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 180px 1fr;
+            gap: 10px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+
+        .form-label {
+            font-size: 14px;
+            color: #000;
+            font-weight: normal;
+        }
+
+        .form-input {
+            padding: 6px 10px;
+            border: 1px solid #999;
+            background-color: #fff;
+            font-size: 14px;
+            font-family: Arial, sans-serif;
+            color: #000;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #666;
+        }
+
+        select.form-input {
+            cursor: pointer;
+        }
+
+        textarea.form-input {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        input[type="number"].form-input {
+            width: 150px;
+        }
+
+        .btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+
+        .btn-save {
+            background-color: #5cb85c;
+            color: white;
+        }
+
+        .btn-save:hover {
+            background-color: #4cae4c;
+        }
+
+        .btn-add {
+            background-color: #0066cc;
+            color: white;
+        }
+
+        .btn-add:hover {
+            background-color: #0052a3;
+        }
+
+        .btn-delete {
+            background-color: #d9534f;
+            color: white;
+            padding: 4px 10px;
+            font-size: 12px;
+        }
+
+        .btn-delete:hover {
+            background-color: #c9302c;
+        }
+
+        .btn-clear {
+            background-color: #f0ad4e;
+            color: white;
+        }
+
+        .btn-clear:hover {
+            background-color: #ec971f;
+        }
+
+        .button-group {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #ccc;
+        }
+
+        .lecture-section {
+            margin-top: 25px;
+            background-color: #fff;
+        }
+
+        .lecture-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border: 1px solid #ccc;
+            border-bottom: 2px solid #999;
+        }
+
+        .lecture-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .lecture-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .lecture-table th {
+            background-color: #f5f5f5;
+            padding: 10px;
+            text-align: left;
+            font-weight: 600;
+            border: 1px solid #ccc;
+            color: #000;
+        }
+
+        .lecture-table td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+        }
+
+        .lecture-link {
+            color: #0066cc;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .lecture-link:hover {
+            text-decoration: underline;
+        }
+
+        .video-icon {
+            width: 18px;
+            height: 18px;
+            border: 1px solid #666;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #fff;
+            font-size: 8px;
+            color: #666;
+        }
+
+        .video-icon::before {
+            content: '▶';
+            margin-left: 2px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            overflow: auto;
+        }
+
+        .modal-content {
+            position: relative;
+            background-color: #fff;
+            margin: 50px auto;
+            padding: 25px;
+            width: 90%;
+            max-width: 600px;
+            border-radius: 4px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .modal-close:hover {
+            color: #000;
+        }
+
+        .success-msg {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #c3e6cb;
+            border-radius: 3px;
+            display: none;
+        }
+
+        .info-box {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #bee5eb;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <div class="info-box">
+            ℹ️ Data stored in memory. Open browser console (F12) to see saved data.
+        </div>
+
+        <div class="success-msg" id="successMsg">Data saved successfully!</div>
+
+        <!-- Course Form -->
+        <form id="courseForm" onsubmit="saveCourse(event)">
+            <div class="form-row">
+                <label class="form-label">Course Title</label>
+                <input type="text" id="courseTitle" class="form-input" required>
+            </div>
+
+            <div class="form-row">
+                <label class="form-label">Trainer</label>
+                <select id="trainer" class="form-input" required>
+                    <option value="">Select Trainer</option>
+                    <option value="Trainer A">Trainer A</option>
+                    <option value="Trainer B">Trainer B</option>
+                    <option value="Trainer C">Trainer C</option>
+                </select>
+            </div>
+
+            <div class="form-row">
+                <label class="form-label">Category</label>
+                <select id="category" class="form-input" required>
+                    <option value="">Select Category</option>
+                    <option value="Technology">Technology</option>
+                    <option value="Design">Design</option>
+                    <option value="Business">Business</option>
+                    <option value="Marketing">Marketing</option>
+                </select>
+            </div>
+
+            <div class="form-row">
+                <label class="form-label">Description</label>
+                <textarea id="description" class="form-input"></textarea>
+            </div>
+
+            <div class="form-row">
+                <label class="form-label">Fees for Individual</label>
+                <input type="text" id="feesIndividual" class="form-input">
+            </div>
+
+            <div class="form-row">
+                <label class="form-label">Fees for Institute</label>
+                <input type="text" id="feesInstitute" class="form-input">
+            </div>
+
+            <div class="form-row">
+                <label class="form-label">Publish?</label>
+                <select id="publish" class="form-input">
+                    <option value="false">False</option>
+                    <option value="true">True</option>
+                </select>
+            </div>
+
+            <div class="form-row">
+                <label class="form-label">Number of Lecture</label>
+                <input type="number" id="numLectures" class="form-input" value="0" min="0" readonly style="background-color: #f5f5f5;">
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="btn btn-save">Save Course</button>
+                <button type="button" class="btn btn-clear" onclick="clearAllData()">Clear All Data</button>
+            </div>
+        </form>
+
+        <!-- Lecture Section -->
+        <div class="lecture-section">
+            <div class="lecture-header">
+                <h3>Lectures (<span id="lectureCount">0</span>)</h3>
+                <button type="button" class="btn btn-add" onclick="openLectureModal()">+ Add Lecture</button>
+            </div>
+            <table class="lecture-table">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Lecture Name</th>
+                        <th style="width: 10%;">Video</th>
+                        <th style="width: 45%;">Topic Covered</th>
+                        <th style="width: 15%;">Free view</th>
+                        <th style="width: 10%;">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="lectureTableBody">
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: #999;">No lectures added yet. Click "+ Add Lecture" to start.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Lecture Modal -->
+    <div id="lectureModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeLectureModal()">&times;</span>
+            <h2 style="margin-bottom: 20px;">Add New Lecture</h2>
+            <form id="lectureForm" onsubmit="addLecture(event)">
+                <div class="form-row">
+                    <label class="form-label">Lecture Name</label>
+                    <input type="text" id="lectureName" class="form-input" required>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">Has Video?</label>
+                    <select id="hasVideo" class="form-input">
+                        <option value="true">Yes</option>
+                        <option value="false">No</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">Topic Covered</label>
+                    <textarea id="topicCovered" class="form-input" placeholder="Topic 1; topic 2; topic 3"></textarea>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">Free View</label>
+                    <select id="freeView" class="form-input">
+                        <option value="false">FALSE</option>
+                        <option value="true">TRUE</option>
+                    </select>
+                </div>
+                <div class="button-group">
+                    <button type="submit" class="btn btn-save">Add Lecture</button>
+                    <button type="button" class="btn" style="background-color: #999; color: white;" onclick="closeLectureModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Global storage
+        let courseData = {};
+        let lectures = [];
+
+        // Save Course
+        function saveCourse(e) {
+            e.preventDefault();
+            
+            courseData = {
+                title: document.getElementById('courseTitle').value,
+                trainer: document.getElementById('trainer').value,
+                category: document.getElementById('category').value,
+                description: document.getElementById('description').value,
+                feesIndividual: document.getElementById('feesIndividual').value,
+                feesInstitute: document.getElementById('feesInstitute').value,
+                publish: document.getElementById('publish').value,
+                numLectures: lectures.length
+            };
+
+            console.log('✅ Course Saved:', courseData);
+            
+            // Show success message
+            const msg = document.getElementById('successMsg');
+            msg.style.display = 'block';
+            setTimeout(() => {
+                msg.style.display = 'none';
+            }, 3000);
+        }
+
+        // Add Lecture
+        function addLecture(e) {
+            e.preventDefault();
+            
+            const lecture = {
+                id: Date.now(),
+                name: document.getElementById('lectureName').value,
+                hasVideo: document.getElementById('hasVideo').value === 'true',
+                topic: document.getElementById('topicCovered').value,
+                freeView: document.getElementById('freeView').value === 'true'
+            };
+
+            lectures.push(lecture);
+            console.log('✅ Lecture Added:', lecture);
+            console.log('📚 Total Lectures:', lectures.length);
+            
+            updateLectureCount();
+            renderLectures();
+            closeLectureModal();
+            document.getElementById('lectureForm').reset();
+        }
+
+        // Update lecture count
+        function updateLectureCount() {
+            const count = lectures.length;
+            document.getElementById('numLectures').value = count;
+            document.getElementById('lectureCount').textContent = count;
+        }
+
+        // Render lectures table
+        function renderLectures() {
+            const tbody = document.getElementById('lectureTableBody');
+            
+            if (lectures.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #999;">No lectures added yet. Click "+ Add Lecture" to start.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = lectures.map(lecture => `
+                <tr>
+                    <td><a href="#" class="lecture-link" onclick="return false">${lecture.name}</a></td>
+                    <td>${lecture.hasVideo ? '<span class="video-icon"></span>' : '-'}</td>
+                    <td>${lecture.topic || ''}</td>
+                    <td>${lecture.freeView ? 'TRUE' : 'FALSE'}</td>
+                    <td><button class="btn btn-delete" onclick="deleteLecture(${lecture.id})">Delete</button></td>
+                </tr>
+            `).join('');
+        }
+
+        // Delete Lecture
+        function deleteLecture(id) {
+            if (confirm('Delete this lecture?')) {
+                lectures = lectures.filter(l => l.id !== id);
+                console.log('🗑️ Lecture Deleted. Remaining:', lectures.length);
+                updateLectureCount();
+                renderLectures();
+            }
+        }
+
+        // Open Modal
+        function openLectureModal() {
+            document.getElementById('lectureModal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Close Modal
+        function closeLectureModal() {
+            document.getElementById('lectureModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+            document.getElementById('lectureForm').reset();
+        }
+
+        // Clear All Data
+        function clearAllData() {
+            if (confirm('Clear all data? This cannot be undone.')) {
+                courseData = {};
+                lectures = [];
+                
+                document.getElementById('courseForm').reset();
+                updateLectureCount();
+                renderLectures();
+                
+                console.log('🧹 All data cleared');
+            }
+        }
+
+        // Close modal on outside click
+        window.onclick = function(event) {
+            const modal = document.getElementById('lectureModal');
+            if (event.target === modal) {
+                closeLectureModal();
+            }
+        }
+
+        // Show current data every 10 seconds
+        setInterval(() => {
+            if (lectures.length > 0 || Object.keys(courseData).length > 0) {
+                console.log('📊 Current State:', {
+                    course: courseData,
+                    lectures: lectures,
+                    totalLectures: lectures.length
+                });
+            }
+        }, 10000);
+
+        console.log('✅ Page loaded. Add lectures and save course to see data here.');
+    </script>
+</body>
+</html>
