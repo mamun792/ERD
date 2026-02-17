@@ -1909,13 +1909,27 @@ document.getElementById('searchIn').addEventListener('input',function(){
 
 // Clear search function
 document.getElementById('btnEsc').addEventListener('click', function(){
-  document.getElementById('searchIn').value = '';
-  document.querySelectorAll('.e').forEach(e=>{
-    e.classList.remove('dimmed','focused','search-match');
-  });
-  this.style.display = 'none';
-  updateSearchCount(0);
-  document.getElementById('searchIn').focus();
+  // If search is active, clear search
+  const searchIn = document.getElementById('searchIn');
+  if(searchIn.value.trim()) {
+    searchIn.value = '';
+    document.querySelectorAll('.e').forEach(e=>{
+      e.classList.remove('dimmed','focused','search-match');
+    });
+    updateSearchCount(0);
+    searchIn.focus();
+    // Also clear focus state
+    if(focusedId) {
+      focusedId=null;
+      document.querySelectorAll('#svgLines path[data-from]').forEach(p=>{p.setAttribute('opacity','.38');p.setAttribute('stroke-width','1.6');});
+      document.getElementById('focusInfo').style.display='none';
+      closePanel();
+    }
+    this.style.display = 'none';
+    return;
+  }
+  // Otherwise clear focus
+  clearFocus();
 });
 
 // Enhanced search count display with better styling
@@ -1970,24 +1984,27 @@ document.addEventListener('keydown', function(e) {
     searchInput.select();
   }
   
-  // Escape to clear search
+  // Escape to clear search or focus
   if(e.key === 'Escape') {
     if(searchInput.value.trim()) {
       document.getElementById('btnEsc').click();
+    } else if(focusedId) {
+      clearFocus();
     }
+    // Also close stats modal
+    document.getElementById('statsModal').classList.remove('open');
+    document.getElementById('fabStats').classList.remove('active');
   }
   
   // Enter to go to next match (if multiple matches)
   if(e.key === 'Enter' && document.activeElement === searchInput) {
     const matches = document.querySelectorAll('.e.search-match');
     if(matches.length > 1) {
-      // Cycle through matches
       let currentIndex = Array.from(matches).findIndex(el => 
         el.getBoundingClientRect().top > window.innerHeight / 2
       );
       if(currentIndex === -1) currentIndex = 0;
       const nextMatch = matches[(currentIndex + 1) % matches.length];
-      
       nextMatch.scrollIntoView({
         behavior: 'smooth',
         block: 'center',
@@ -2048,8 +2065,7 @@ function clearFocus(){
   document.getElementById('focusInfo').style.display='none';
   closePanel();
 }
-document.getElementById('btnEsc').addEventListener('click',clearFocus);
-document.addEventListener('keydown',e=>{if(e.key==='Escape')clearFocus();});
+/* btnEsc click handler already set above in search section */
 
 /* ════════════════════════════════════════════
    SIDE PANEL CONTENT
@@ -2285,32 +2301,33 @@ setTimeout(()=>{drawLines();animLines();drawMinimap();},350);
 ════════════════════════════════════════════ */
 (function(){
   const bar=document.getElementById('loaderBar');
+  const loaderEl=document.getElementById('loader');
+  if(!bar||!loaderEl)return;
   let p=0;
   const iv=setInterval(()=>{
     p+=Math.random()*18+8;
     if(p>95)p=95;
     bar.style.width=p+'%';
   },120);
-  window.addEventListener('load',()=>{
+  // Page is already loaded since script is at bottom, so hide after short delay
+  setTimeout(()=>{
     clearInterval(iv);
     bar.style.width='100%';
-    setTimeout(()=>{
-      document.getElementById('loader').classList.add('hidden');
-    },400);
-  });
+    setTimeout(()=>loaderEl.classList.add('hidden'),300);
+  },800);
 })();
 
 /* ════════════════════════════════════════════
    SCROLL TO TOP
 ════════════════════════════════════════════ */
 (function(){
-  const btn=document.getElementById('scrollTop');
-  const wrap=document.getElementById('cWrap');
-  wrap.addEventListener('scroll',()=>{
-    btn.classList.toggle('visible', wrap.scrollTop > 200 || wrap.scrollLeft > 200);
+  const stBtn=document.getElementById('scrollTop');
+  const cw=document.getElementById('cWrap');
+  cw.addEventListener('scroll',()=>{
+    stBtn.classList.toggle('visible', cw.scrollTop > 200 || cw.scrollLeft > 200);
   });
-  btn.addEventListener('click',()=>{
-    wrap.scrollTo({top:0,left:0,behavior:'smooth'});
+  stBtn.addEventListener('click',()=>{
+    cw.scrollTo({top:0,left:0,behavior:'smooth'});
   });
 })();
 
@@ -2384,9 +2401,9 @@ document.getElementById('statsModal').addEventListener('click',function(e){
 ════════════════════════════════════════════ */
 document.getElementById('fabExport').addEventListener('click',function(){
   showToast('📸 Preparing screenshot...','success');
-  const canvas=document.getElementById('canvas');
-  const origTransform=canvas.style.transform;
-  canvas.style.transform='scale(1)';
+  const canvasEl=document.getElementById('canvas');
+  const origTransform=canvasEl.style.transform;
+  canvasEl.style.transform='scale(1)';
   
   // Use html2canvas if available, otherwise simple method
   const exportCanvas=document.createElement('canvas');
@@ -2468,7 +2485,7 @@ document.getElementById('fabExport').addEventListener('click',function(){
   ctx.font='bold 12px Plus Jakarta Sans, sans-serif';
   ctx.fillText('Designed by Mahabubur Rahman (DD) · E-Commerce ERD · '+new Date().getFullYear(), 20, 2600);
   
-  canvas.style.transform=origTransform;
+  canvasEl.style.transform=origTransform;
   
   // Download
   const link=document.createElement('a');
